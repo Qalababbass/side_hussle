@@ -5,6 +5,11 @@ import open3d as o3d
 from sensor_msgs import point_cloud2
 
 def csm_processing():
+
+    '''
+    Read pointcloud data saved in a csv file format. From those data points in x,y,z get x axis values only.
+    Convert those points into a open3d PointCloud object to perform open3d functions on it.
+    '''
     points_csm=np.loadtxt('cropped using point number_new/start_1666093055 - Cloud.csv',delimiter=';',skiprows=1)
     points_csm_x=points_csm[~np.all(points_csm==0, axis=1)]
     
@@ -49,6 +54,12 @@ def csm_processing():
 
 
 def dtm_processing():
+
+    '''
+    Read pointcloud data saved in a csv file format. From those data points in x,y,z get x axis values only.
+    Convert those points into a open3d PointCloud object to perform open3d functions on it.
+    '''
+        
     points_csm=np.loadtxt('cropped using point number/ground__1670316850 - Cloud.csv',delimiter=';',skiprows=1)
     points_csm_x=points_csm[~np.all(points_csm==0, axis=1)]
     
@@ -106,11 +117,11 @@ dtm_readings_average=Average(dtm_readings)
 
 aver=crop_readings_average-dtm_readings_average
 print('Average = {}'.format(aver) )
-maxim=max(crop_readings)-max(dtm_readings)
+maxim=np.max(crop_readings)-np.max(dtm_readings)
 print('Max Value = {}'.format(maxim))
-mini=min(crop_readings)-min(dtm_readings)
+mini=np.min(crop_readings)-np.min(dtm_readings)
 print('Min Value =  {}'.format(mini) )
-max_min=max(crop_readings)-min(dtm_readings)
+max_min=np.max(crop_readings)-np.min(dtm_readings)
 print('Max - Min Value = {}'.format(max_min))
 
 
