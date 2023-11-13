@@ -1,14 +1,10 @@
 import rosbag
-#import pcl
 import open3d as o3d
-#import geemap
-#import open3d_tutorial as o3dtut
 import numpy as np
 from sensor_msgs.msg import PointCloud2
 from sensor_msgs import point_cloud2
-import pptk
 import copy
-import pypcd
+
 
 
 def write_rosbag(bag):
@@ -29,11 +25,15 @@ def write_rosbag(bag):
 
 
 def write_rosbag_ground(bag):
-    bag3=rosbag.Bag('ground_data/recording_2022-12-06-09-53-56_0/ground_1670316860.bag','w')
+    '''
+    This function takes in rosbag file as input and use this rosbag to write another rosbag file containing only the /point_cloud_topic_name and /tf msg
+    at specified t.secs timestamp value.
+    '''
+    bag3=rosbag.Bag('new_rosbag_file.bag','w')
     ran=False
-    for topic,msg,t in bag.read_messages(topics=['/ouster_cloud_os1_0/points','/tf']):
+    for topic,msg,t in bag.read_messages(topics=['/point_cloud_topic_name','/tf']):
         if t.secs==1670316860:
-            if topic=='/ouster_cloud_os1_0/points' and not ran:
+            if topic=='/point_cloud_topic_name' and not ran:
                 bag3.write(topic,msg)
                 ran=True
             elif topic=='/tf':
@@ -41,10 +41,16 @@ def write_rosbag_ground(bag):
     bag3.close()
 
 def extract_lidar_point(bag):
+    '''
+    This function takes in rosbag as input file and reads the pointcloud msg from /point_cloud_topic_name at specified t.secs timestamp. It extracts the x,y,z field from msg data
+    and save it into a numpy array.
+    It then saves these extracted points into a .npy format
+    '''
+
     ran=False
-    for topic,msg,t in bag.read_messages(topics='/ouster_cloud_os1_0/points'):
+    for topic,msg,t in bag.read_messages(topics='/point_cloud_topic_name'):
         if t.secs==1666091281:
-            if topic=='/ouster_cloud_os1_0/points' and not ran:
+            if topic=='/point_cloud_topic_name' and not ran:
                 points=np.array(list(point_cloud2.read_points(msg, field_names = ("x", "y", "z"), skip_nans=True)))
     with open('test.npy','wb') as f:
         np.save(f,points)
@@ -56,23 +62,29 @@ def pc_to_csv(bag):
     properties of pointcloud in a csv format at the specified timestamp
     '''
     ran=False
-    for topic,msg,t in bag.read_messages(topics='/ouster_cloud_os1_0/points'):
+    for topic,msg,t in bag.read_messages(topics='/point_cloud_topic_name'):
         if t.secs==1666088434:
-            if topic=='/ouster_cloud_os1_0/points' and not ran:
+            if topic=='/point_cloud_topic_name' and not ran:
                 points=np.array(list(point_cloud2.read_points(msg, field_names = ("x", "y", "z","intensity","reflectivity","range"), skip_nans=True)))
     with open('./greenland_2_checking.csv', 'w') as f:
         for point in points:
             f.write(','.join(str(x) for x in point) + '\n')
 
 def pointcloud_to_pcd(bag):
+    '''
+    This function takes in rosbag file as input parameter. It then reads the pointcloud_topic_name msg from rosbag and get the specified x,y,z,rgb fields
+    from pointcloud msg and save it in a numpy array.
+    It then converts the array to Open3d pontcloud object and save it into a .pcd file format.
+    '''
+
     ran=False
-    for topic,msg,t in bag.read_messages(topics='/point_cloud_rgb/points'):
+    for topic,msg,t in bag.read_messages(topics='/point_cloud_topic_name'):
         if t.secs==1686230969:
-            if topic=='/point_cloud_rgb/points' and not ran:
+            if topic=='/point_cloud_topic_name' and not ran:
                 points=np.array(list(point_cloud2.read_points(msg, field_names = ("x", "y", "z","rgb"), skip_nans=True)))
     pcd=o3d.geometry.PointCloud()
     pcd.points=o3d.utility.Vector3dVector(points)
-    o3d.io.write_point_cloud("rgb_pcd_and_rosbag/greenland_rgb.pcd", pcd)
+    o3d.io.write_point_cloud("pointcloud_data.pcd", pcd)
 #roi_width = 10.0 # 10 cm
 # roi_height = 10.0 # 10 cm
 # roi_depth=100.0
@@ -133,7 +145,7 @@ def pointcloud_to_pcd(bag):
 
 def pc_visualization():
     '''
-    This function uses open3d for visualizing pointcloud in python
+    This function uses open3d for visualizing pointcloud saved in a .pcd format in python
     '''
 
     pc_pcd=o3d.io.read_point_cloud('rgb_pcd_and_rosbag/greenland_rgb.pcd')
@@ -147,7 +159,7 @@ def pc_visualization():
 
 def npy_pc_visulization():
     '''
-    This function uses open3d for visualizing pointcloud in python
+    This function uses open3d for visualizing pointcloud saved in a .npy format in python
     '''
     pc_np=np.load('./test.npy')
     print('Shape of point cloud: ',pc_np.shape)
@@ -192,7 +204,7 @@ def demo_manual_registration():
 
 def pick_points(pcd):
     '''
-    This function uses open3d for visualizing pointcloud in python
+    This function uses open3d for visualizing pointcloud in python and picking specifc points from it
     '''
     
     print("")
@@ -222,9 +234,10 @@ def draw_registration_result(source, target, transformation):
     o3d.visualization.draw_geometries([source_temp, target_temp])
 
 
-bag=rosbag.Bag('rgb_pcd_and_rosbag/greenlan_recording.bag')
-#bag_2=rosbag.Bag('/home/qalab/DFKI/greenland_height/krone_data/recording_2022-10-18-13-13-08_0.bag')
-ground_bag=rosbag.Bag('rgb_pcd_and_rosbag/ground_recording.bag')
+bag=rosbag.Bag('rosbag_file.bag')
+
+ground_bag=rosbag.Bag('reference_rosbag_file.bag')
+
 #write_rosbag(bag)
 #write_rosbag_ground(ground_bag)
 #extract_lidar_point(bag)
